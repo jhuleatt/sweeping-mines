@@ -12,19 +12,16 @@ class Grid extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      grid: createGrid(props.rows, props.columns, props.mines),
-      isGameOver: false
+      isGameOver: false,
+      openedCells: 0
     };
   }
   componentWillReceiveProps(nextProps) {
     console.log("THIS IS WORKING");
-    this.setState({
-      grid: createGrid(props.rows, props.columns, props.mines)
-    });
   }
 
   openSurrounding(x, y) {
-    const grid = this.state.grid;
+    const grid = this.props.grid;
     let cell = grid[x][y];
     let fcn = (newX, newY) => {
       let nextCell = grid[newX][newY];
@@ -35,7 +32,7 @@ class Grid extends Component {
     iterateSurroundingCells(grid, x, y, fcn);
   }
   openCell(i, j) {
-    const grid = this.state.grid.slice();
+    const grid = this.props.grid.slice();
     if (!grid[i][j].isOpened && !grid[i][j].isFlagged) {
       if (grid[i][j].hasMine) {
         this.props.endGame("L");
@@ -45,8 +42,8 @@ class Grid extends Component {
         if (grid[i][j].count === 0) {
           this.openSurrounding(i, j);
         }
+        this.props.updateGrid(grid);
         this.setState({
-          grid: grid,
           openedCells: newOpenedCells
         });
         const didWin =
@@ -59,16 +56,17 @@ class Grid extends Component {
     }
   }
   toggleFlag(i, j) {
-    const grid = this.state.grid.slice();
+    const grid = this.props.grid.slice();
     if (!grid[i][j].isOpened) {
       grid[i][j].isFlagged = !grid[i][j].isFlagged;
     }
-    this.setState({ grid: grid });
+    this.props.updateGrid(grid);
   }
   renderCell(i, j) {
-    let gridCell = this.state.grid[i][j];
+    let gridCell = this.props.grid[i][j];
     return (
       <Cell
+        key={`${i}:${j}`}
         count={gridCell.count}
         isOpened={gridCell.isOpened}
         hasMine={gridCell.hasMine}
@@ -82,11 +80,11 @@ class Grid extends Component {
     );
   }
   render() {
-    var grid = this.state.grid.map((row, i) => {
+    var grid = this.props.grid.map((row, i) => {
       let rows = row.map((column, j) => {
         return this.renderCell(i, j);
       });
-      return <tr>{rows}</tr>;
+      return <tr key={i}>{rows}</tr>;
     });
     return (
       <table className="grid">

@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import Grid from "./components/Grid.js";
+import GameList from "./components/GameList.js";
+import GridProvider from './components/GridProvider.js';
 import "../style/App.css";
 
 /**
@@ -12,18 +14,11 @@ class App extends Component {
       rows: 10,
       columns: 10,
       mines: 9,
-      endGame: this.endGame
+      endGame: this.endGame,
+      currentGameId: '',
     };
   }
-  endGame(gameCondition) {
-    if (gameCondition === "W") {
-      console.log("WINNER");
-      //option to restart
-    } else if (gameCondition === "L") {
-      console.log("LOSER");
-      //end the game (TODO: option to restart the game)
-    }
-  }
+
   restartGame() {
     this.setState({
       rows: 10,
@@ -32,19 +27,37 @@ class App extends Component {
       endGame: this.endGame
     });
   }
+
   render() {
     return (
       <div>
-        <div className="restart" onClick={this.restartGame}>
-          RESTART
-        </div>
-        <Grid
-          rows={this.state.rows}
-          columns={this.state.columns}
-          mines={this.state.mines}
-          endGame={this.endGame}
-        />
-      </div>
+        <h1>{`Game ID: ${this.state.currentGameId}`}</h1>
+        <GridProvider boardId={this.state.currentGameId} render={
+          (isGameListLoaded, allGames, serializedBoard, updateBoard, createNewGame, endGame) => {
+            if (!isGameListLoaded) {
+              return <h1>... LOADING ...</h1>
+            }
+
+            let boardComponent = <h2>Choose a game to play</h2>
+            if (serializedBoard) {
+              const board = JSON.parse(serializedBoard);
+              boardComponent = (<Grid
+                grid={board}
+                updateGrid={(grid) => updateBoard(JSON.stringify(grid))}
+                endGame={endGame}
+              />);
+            }
+
+            return (
+              <div>
+                {boardComponent}
+                <h2>Available games (click one to join)</h2>
+                <GameList games={allGames} onClick={(gameId) => () => this.setState({ currentGameId: gameId })} />
+                <button onClick={() => createNewGame().then(newBoardId => this.setState({ currentGameId: newBoardId }))}>CREATE NEW GAME</button>
+              </div>);
+          }
+        } />
+      </div >
     );
   }
 }
